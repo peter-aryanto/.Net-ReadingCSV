@@ -7,6 +7,11 @@ namespace PrintCost.DomainObjects
 {
   public class PrintOptions
   {
+    public PrintOptions()
+    {
+      CopyPapers = new List<CopyPaper>();
+    }
+
     public List<CopyPaper> CopyPapers { get; set; }
   }
 

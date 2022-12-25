@@ -26,6 +26,9 @@ namespace PrintCost
     public void ConfigureServices(IServiceCollection services)
     {
       services.AddControllers();
+
+      var printOptions = Configuration.GetSection("PrintOptions");
+      services.Configure<DomainObjects.PrintOptions>(printOptions);
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

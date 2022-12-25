@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using PrintCost.DomainObjects;
 
 namespace PrintCost.BusinessLogics
@@ -9,7 +10,6 @@ namespace PrintCost.BusinessLogics
   public interface IPrintCostCalculator
   {
     public decimal? FindCostInCentsPerCopyPaperSheet(
-      List<CopyPaper> copyPapers,
       string size,
       bool isColor,
       bool isDoubleSided
@@ -18,8 +18,14 @@ namespace PrintCost.BusinessLogics
 
   public class PrintCostCalculator : IPrintCostCalculator
   {
+    private readonly PrintOptions _printOptions;
+
+    public PrintCostCalculator(IOptions<PrintOptions> printOptions)
+    {
+      _printOptions = printOptions.Value;
+    }
+
     public decimal? FindCostInCentsPerCopyPaperSheet(
-      List<CopyPaper> copyPapers,
       string size,
       bool isColor,
       bool isDoubleSided
@@ -27,7 +33,7 @@ namespace PrintCost.BusinessLogics
     {
       decimal? output = null;
 
-      foreach (var paper in copyPapers)
+      foreach (var paper in _printOptions.CopyPapers)
       {
         if (
           paper.Size == size
