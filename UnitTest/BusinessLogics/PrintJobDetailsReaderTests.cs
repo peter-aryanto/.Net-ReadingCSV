@@ -68,7 +68,16 @@ namespace UnitTest.BusinessLogics
 
       PrintJobDetails output;
 
-      string validCsvRow = "55, 13, tRUe";
+      string validCsvRow = "55,13,tRUe";
+      output = testObject.ReadPrintJobDetailsCsvRow(validCsvRow);
+      Assert.Equal(typeof(CopyPaper).Name, output.PaperType.Name);
+      Assert.Equal("A4", output.PaperSize);
+      Assert.Equal(55, output.TotalNumberOfPages);
+      Assert.Equal(55 - 13, output.NumberOfBlackAndWhitePages);
+      Assert.Equal(13, output.NumberOfColourPages);
+      Assert.True(output.IsDoubleSided);
+
+      validCsvRow = validCsvRow.Replace(",", ", ");
       output = testObject.ReadPrintJobDetailsCsvRow(validCsvRow);
       Assert.Equal(typeof(CopyPaper).Name, output.PaperType.Name);
       Assert.Equal("A4", output.PaperSize);

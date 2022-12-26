@@ -20,7 +20,7 @@ namespace PrintCost.BusinessLogics
         return null;
       }
 
-      string[] inputCsvColumns = csvRow.Split(", ");
+      string[] inputCsvColumns = csvRow.Split(',');
       int expectedColumnCount = PrintJobDetails.CsvColumns.Length;
 
       if (inputCsvColumns.Length != PrintJobDetails.CsvColumns.Length)
