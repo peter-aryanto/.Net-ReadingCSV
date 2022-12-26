@@ -5,7 +5,7 @@ using Xunit;
 using Moq;
 using PrintCost.DomainObjects;
 using PrintCost.BusinessLogics;
-using Microsoft.Extensions.Options;
+using UnitTest.UnitTestHelpers;
 
 namespace UnitTest.BusinessLogics
 {
@@ -40,9 +40,10 @@ namespace UnitTest.BusinessLogics
 
       //IOptions<PrintOptions> printOptionsSetup = Options.Create<PrintOptions>(printOptions);
       //var testObject = new PrintCostCalculator(printOptionsSetup);
-      var printOptionsSetup = new Mock<IOptions<PrintOptions>>();
-      printOptionsSetup.Setup(x => x.Value).Returns(printOptions);
-      var testObject = new PrintCostCalculator(printOptionsSetup.Object);
+      //var printOptionsSetup = new Mock<IOptions<PrintOptions>>();
+      //printOptionsSetup.Setup(x => x.Value).Returns(printOptions);
+      //var testObject = new PrintCostCalculator(printOptionsSetup.Object);
+      var testObject = PrintCostCalculatorHelper.SetupTestObject(printOptions);
 
       decimal? output;
 
