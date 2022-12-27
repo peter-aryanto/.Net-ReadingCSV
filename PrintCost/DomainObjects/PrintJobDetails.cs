@@ -24,5 +24,17 @@ namespace PrintCost.DomainObjects
     public int NumberOfBlackAndWhitePages { get; set; }
     public int NumberOfColourPages { get; set; }
     public bool IsDoubleSided { get; set; }
+
+    public override string ToString()
+    {
+      string doubleSidedInfo =
+        IsDoubleSided ? "double sided" : "single sided";
+      string blackAndWhitePagesInfo =
+        $"{NumberOfBlackAndWhitePages} black and white page(s)";
+      string colourPagesInfo =
+        $"{NumberOfColourPages} colour page(s)";
+      return $"Print job: {PaperSize} copy paper {doubleSidedInfo}; "
+        + $"{blackAndWhitePagesInfo}; {colourPagesInfo}.";
+    }
   }
 }

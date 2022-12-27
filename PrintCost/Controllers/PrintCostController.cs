@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using PrintCost.BusinessLogics;
+using PrintCost.DomainObjects;
+using PrintCost.Helpers;
 
 namespace PrintCost.Controllers
 {
@@ -17,6 +20,21 @@ namespace PrintCost.Controllers
       "Please provide the CSV file containing the print job details.";
     public static readonly string ErrorCannotReadPrintJobDetailsFile =
       "Cannot read print job details from the provided file. " + ErrorPrintJobDetailsFile;
+
+    private readonly IPrintJobDetailsReader _printJobDetailsReader;
+    private readonly IPrintCostCalculator _printCostCalculator;
+    private readonly IOutputWriter _outputWriter;
+
+    public PrintCostController(
+      IPrintJobDetailsReader printJobDetailsReader,
+      IPrintCostCalculator printCostCalculator,
+      IOutputWriter outputWriter
+    )
+    {
+      _printJobDetailsReader = printJobDetailsReader;
+      _printCostCalculator = printCostCalculator;
+      _outputWriter = outputWriter;
+    }
 
     // curl -i -F printJobDetails=@sample.csv -F additionalInput1=Hello http://localhost:5000/api/PrintCost/PrintCostDetails
     [HttpPost("PrintCostDetails")]
@@ -45,10 +63,24 @@ namespace PrintCost.Controllers
             printJobDetailsCsvRows.Add(row);
           }
         }
+
+        var printJobList = new List<PrintJobDetails>();
+        foreach (var csvRow in printJobDetailsCsvRows)
+        {
+          var printJobDetails = _printJobDetailsReader.ReadPrintJobDetailsCsvRow(csvRow);
+          printJobList.Add(printJobDetails);
+          //Console.WriteLine(printJobDetails.ToString());
+          _outputWriter.ConsoleWriteLine(printJobDetails.ToString());
+        }
       }
       catch (Exception e)
       {
-        return StatusCode(StatusCodes.Status500InternalServerError, new { Exception = e.StackTrace });
+        var errorObject =
+          new
+          {
+            Error = e.Message + e.StackTrace,
+          };
+        return BadRequest(errorObject);
       }
 
       return Ok(

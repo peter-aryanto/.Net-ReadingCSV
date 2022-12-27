@@ -10,6 +10,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using PrintCost.BusinessLogics;
+using PrintCost.Helpers;
 
 namespace PrintCost
 {
@@ -30,6 +32,10 @@ namespace PrintCost
 
       var printOptions = Configuration.GetSection("PrintOptions");
       services.Configure<DomainObjects.PrintOptions>(printOptions);
+
+      services.AddScoped<IPrintJobDetailsReader, PrintJobDetailsReader>();
+      services.AddScoped<IPrintCostCalculator, PrintCostCalculator>();
+      services.AddScoped<IOutputWriter, OutputWriter>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
