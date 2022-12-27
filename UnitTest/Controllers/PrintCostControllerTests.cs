@@ -30,8 +30,13 @@ namespace UnitTest.Controllers
       _printJobDetailsReader = new Mock<IPrintJobDetailsReader>();
       var dummyPrintJobDetails = new PrintJobDetails();
       _dummyPrintJobDetailsString = dummyPrintJobDetails.ToString();
-      _printJobDetailsReader.Setup(x => x.ReadPrintJobDetailsCsvRow(It.IsAny<string>()))
+      _printJobDetailsReader
+        .Setup(x => x.ReadPrintJobDetailsCsvRow(It.Is<string>(s => !string.IsNullOrWhiteSpace(s))))
         .Returns(dummyPrintJobDetails)
+        .Verifiable();
+      _printJobDetailsReader
+        .Setup(x => x.ReadPrintJobDetailsCsvRow(It.Is<string>(s => string.IsNullOrWhiteSpace(s))))
+        .Returns<PrintJobDetails>(null)
         .Verifiable();
 
       _printCostCalculator = new Mock<IPrintCostCalculator>();
@@ -119,17 +124,19 @@ namespace UnitTest.Controllers
     public void PrintCostDetails_WhenFileIsProvided_ThenCallsOutputWriter()
     {
       var contentRow1 = "25, 10, false";
-      var contentRow2 = "55, 13, true";
-      var printJobDetailsFile = SetupPrintJobDetailsFile(
+      var emptyRow2 = string.Empty;
+      var contentRow3 = "55, 13, true";
+      var printJobDetailsFileWith2ContentRowsAnd1EmptyRow = SetupPrintJobDetailsFile(
         new List<string>
         {
           contentRow1,
-          contentRow2,
+          emptyRow2,
+          contentRow3,
         }
       );
       var files = new Mock<IFormFileCollection>();
       files.Setup(x => x.GetFile(PrintCostController.PrintJobDetailsFileFormFieldName))
-        .Returns(printJobDetailsFile);
+        .Returns(printJobDetailsFileWith2ContentRowsAnd1EmptyRow);
 
       var formData = new Mock<IFormCollection>();
       formData.Setup(x => x.Files).Returns(files.Object);
