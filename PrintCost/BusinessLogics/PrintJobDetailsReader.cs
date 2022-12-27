@@ -39,9 +39,24 @@ namespace PrintCost.BusinessLogics
         {
           case 0:
             output.TotalNumberOfPages = int.Parse(csvColumnValue);
+            if (output.TotalNumberOfPages <= 0)
+            {
+              throw new Exception($"Invalid total number of pages ({output.TotalNumberOfPages}).");
+            }
+
             break;
           case 1:
             output.NumberOfColourPages = int.Parse(csvColumnValue);
+            if (output.NumberOfColourPages < 0)
+            {
+              throw new Exception($"Invalid number of colour pages ({output.NumberOfColourPages}).");
+            }
+            if (output.NumberOfColourPages > output.TotalNumberOfPages)
+            {
+              throw new Exception($"Number of colour pages ({output.NumberOfColourPages}) "
+                + $"should not be more than total number of pages ({output.TotalNumberOfPages}).");
+            }
+
             output.NumberOfBlackAndWhitePages =
               output.TotalNumberOfPages - output.NumberOfColourPages;
             break;

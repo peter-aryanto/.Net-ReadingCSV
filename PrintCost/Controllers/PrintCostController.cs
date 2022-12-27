@@ -69,7 +69,6 @@ namespace PrintCost.Controllers
         {
           var printJobDetails = _printJobDetailsReader.ReadPrintJobDetailsCsvRow(csvRow);
           printJobList.Add(printJobDetails);
-          //Console.WriteLine(printJobDetails.ToString());
           _outputWriter.ConsoleWriteLine(printJobDetails.ToString());
         }
       }

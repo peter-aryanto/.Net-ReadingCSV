@@ -52,13 +52,63 @@ namespace UnitTest.BusinessLogics
     }
 
     [Fact]
-    public void ReadPrintJobDetailsCsvRow_WhenColumnValueTypeInvalid_ThrowsException()
+    public void ReadPrintJobDetailsCsvRow_WhenColumnValueTypeInvalid_ThenThrowsException()
     {
       var testObject = new PrintJobDetailsReader();
 
       string csvRowWithInvalidLastColumnValueType = "25, 10, yes";
       Assert.ThrowsAny<Exception>(() =>
         testObject.ReadPrintJobDetailsCsvRow(csvRowWithInvalidLastColumnValueType));
+    }
+
+    [Fact]
+    public void ReadPrintJobDetailsCsvRow_WhenNumberOfPagesInvalid_ThenThrowsException()
+    {
+      var testObject = new PrintJobDetailsReader();
+
+      PrintJobDetails output;
+
+      string csvRowWithNoColourPage = "1, 0, false";
+      output = testObject.ReadPrintJobDetailsCsvRow(csvRowWithNoColourPage);
+      Assert.Equal(1, output.NumberOfBlackAndWhitePages);
+
+      string csvRowWithAllColourPages = "1, 1, false";
+      output = testObject.ReadPrintJobDetailsCsvRow(csvRowWithAllColourPages);
+      Assert.Equal(0, output.NumberOfBlackAndWhitePages);
+
+      try
+      {
+        string csvRowWithColourPagesMoreThanTotalOfAllPages = "1, 2, false";
+        output = testObject.ReadPrintJobDetailsCsvRow(csvRowWithColourPagesMoreThanTotalOfAllPages);
+      }
+      catch (Exception e)
+      {
+        string expectedMessage = "Number of colour pages (2) "
+          + "should not be more than total number of pages (1).";
+        Assert.Equal(expectedMessage, e.Message);
+      }
+
+      try
+      {
+        string csvRowWithColourPagesMoreThanTotalOfAllPages = "0, 0, false";
+        output = testObject.ReadPrintJobDetailsCsvRow(csvRowWithColourPagesMoreThanTotalOfAllPages);
+      }
+      catch (Exception e)
+      {
+        string expectedMessage = "Invalid total number of pages (0).";
+        Assert.Equal(expectedMessage, e.Message);
+      }
+
+      try
+      {
+        string csvRowWithColourPagesMoreThanTotalOfAllPages = "1, -1, false";
+        output = testObject.ReadPrintJobDetailsCsvRow(csvRowWithColourPagesMoreThanTotalOfAllPages);
+      }
+      catch (Exception e)
+      {
+        string expectedMessage = "Invalid number of colour pages (-1).";
+        Assert.Equal(expectedMessage, e.Message);
+      }
     }
 
     [Fact]
