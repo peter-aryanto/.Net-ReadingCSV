@@ -23,16 +23,45 @@ namespace UnitTest.Controllers
     private readonly Mock<IPrintCostCalculator> _printCostCalculator;
     private readonly Mock<IOutputWriter> _outputWriter;
 
+    private readonly PrintJobDetails _dummyPrintJobDetails;
     private readonly string _dummyPrintJobDetailsString;
 
     public PrintCostControllerTests()
     {
       _printJobDetailsReader = new Mock<IPrintJobDetailsReader>();
-      var dummyPrintJobDetails = new PrintJobDetails();
-      _dummyPrintJobDetailsString = dummyPrintJobDetails.ToString();
+      const decimal dummyJobPartCostInCents = 100;
+      var dummyPrintJobParts =
+        new List<PrintJobPart>
+        {
+          new PrintJobPart
+          {
+            NumberOfPages = 1,
+            PrintPaper = new CopyPaper
+            {
+              IsColor = false,
+            },
+            CalculatedCostInCents = dummyJobPartCostInCents,
+          },
+          new PrintJobPart
+          {
+            NumberOfPages = 2,
+            PrintPaper = new CopyPaper
+            {
+              IsColor = true,
+            },
+            CalculatedCostInCents = dummyJobPartCostInCents,
+          },
+        };
+      _dummyPrintJobDetails = new PrintJobDetails
+      {
+        PrintJobParts = dummyPrintJobParts,
+      };
+      _dummyPrintJobDetails.CalculatedCostInCents =
+        dummyPrintJobParts.Count * dummyJobPartCostInCents;
+      _dummyPrintJobDetailsString = _dummyPrintJobDetails.ToString();
       _printJobDetailsReader
         .Setup(x => x.ReadPrintJobDetailsCsvRow(It.Is<string>(s => !string.IsNullOrWhiteSpace(s))))
-        .Returns(dummyPrintJobDetails)
+        .Returns(_dummyPrintJobDetails)
         .Verifiable();
       _printJobDetailsReader
         .Setup(x => x.ReadPrintJobDetailsCsvRow(It.Is<string>(s => string.IsNullOrWhiteSpace(s))))
@@ -40,6 +69,10 @@ namespace UnitTest.Controllers
         .Verifiable();
 
       _printCostCalculator = new Mock<IPrintCostCalculator>();
+      _printCostCalculator
+        .Setup(x => x.CalculateCostInCents(It.IsAny<int>(), It.IsAny<IPrintPaper>()))
+        .Returns(dummyJobPartCostInCents)
+        .Verifiable();
 
       _outputWriter = new Mock<IOutputWriter>();
 
@@ -121,6 +154,39 @@ namespace UnitTest.Controllers
     }
 
     [Fact]
+    public void PrintCostDetails_WhenFileIsProvided_ThenCallsPrintCostCalculator()
+    {
+      var contentRow1 = "25, 10, false";
+      var emptyRow2 = string.Empty;
+      var contentRow3 = "55, 13, true";
+      var csvRows =
+        new List<string>
+        {
+          contentRow1,
+          emptyRow2,
+          contentRow3,
+        };
+      var printJobDetailsFileWith2ContentRowsAnd1EmptyRow = SetupPrintJobDetailsFile(csvRows);
+      var files = new Mock<IFormFileCollection>();
+      files.Setup(x => x.GetFile(PrintCostController.PrintJobDetailsFileFormFieldName))
+        .Returns(printJobDetailsFileWith2ContentRowsAnd1EmptyRow);
+
+      var formData = new Mock<IFormCollection>();
+      formData.Setup(x => x.Files).Returns(files.Object);
+
+      var output = _testObject.PrintCostDetails(formData.Object);
+
+      _printCostCalculator.Verify(
+        x => x.CalculateCostInCents(_dummyPrintJobDetails.PrintJobParts[0].NumberOfPages, It.Is<IPrintPaper>(p => !((CopyPaper)p).IsColor)),
+        Times.Exactly(2)
+      );
+      _printCostCalculator.Verify(
+        x => x.CalculateCostInCents(_dummyPrintJobDetails.PrintJobParts[1].NumberOfPages, It.Is<IPrintPaper>(p => ((CopyPaper)p).IsColor)),
+        Times.Exactly(2)
+      );
+    }
+
+    [Fact]
     public void PrintCostDetails_WhenFileIsProvided_ThenCallsOutputWriter()
     {
       var contentRow1 = "25, 10, false";
@@ -144,6 +210,9 @@ namespace UnitTest.Controllers
       var output = _testObject.PrintCostDetails(formData.Object);
 
       _outputWriter.Verify(x => x.ConsoleWriteLine(_dummyPrintJobDetailsString), Times.Exactly(2));
+      const string expectedTotalCostInCentsInfo = "Total Cost of All Jobs in Cents = 400.";
+      _outputWriter.Verify(x => x.ConsoleWriteLine(expectedTotalCostInCentsInfo), Times.Once);
+      _outputWriter.Verify(x => x.ConsoleWriteLine(PrintCostController.EndingLine), Times.Once);
     }
 
     [Fact]

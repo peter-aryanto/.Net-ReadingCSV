@@ -9,11 +9,12 @@ namespace PrintCost.BusinessLogics
 {
   public interface IPrintCostCalculator
   {
-    public decimal? FindCostInCentsPerCopyPaperSheet(
+    public decimal FindCostInCentsPerCopyPaperPage(
       string size,
       bool isColor,
       bool isDoubleSided
     );
+    public decimal? CalculateCostInCents(int numberOfPages, IPrintPaper printPaper);
   }
 
   public class PrintCostCalculator : IPrintCostCalculator
@@ -25,14 +26,12 @@ namespace PrintCost.BusinessLogics
       _printOptions = printOptions.Value;
     }
 
-    public decimal? FindCostInCentsPerCopyPaperSheet(
+    public decimal FindCostInCentsPerCopyPaperPage(
       string size,
       bool isColor,
       bool isDoubleSided
     )
     {
-      decimal? output = null;
-
       foreach (var paper in _printOptions.CopyPapers)
       {
         if (
@@ -41,12 +40,42 @@ namespace PrintCost.BusinessLogics
           && paper.IsDoubleSided == isDoubleSided
         )
         {
-          output = paper.CostInCents;
-          break;
+          return paper.CostInCents;
         }
       }
 
-      return output;
+      throw new Exception(GenerateErrorMessageFromCalculation(
+        new CopyPaper
+        {
+          Size = size,
+          IsColor = isColor,
+          IsDoubleSided = isDoubleSided,
+        }
+      ));
+    }
+
+    private string GenerateErrorMessageFromCalculation(IPrintPaper printPaper)
+    {
+      return $"Cannot calculate cost for: {printPaper.GetInfo()}";
+    }
+
+    public decimal? CalculateCostInCents(int numberOfPages, IPrintPaper printPaper)
+    {
+      if (printPaper.GetType().Name == typeof(CopyPaper).Name)
+      {
+        var copyPaper = (CopyPaper)printPaper;
+        var costInCents = FindCostInCentsPerCopyPaperPage(
+          copyPaper.Size,
+          copyPaper.IsColor,
+          copyPaper.IsDoubleSided
+        );
+        copyPaper.CostInCents = costInCents;
+        return numberOfPages * costInCents;
+      }
+      else
+      {
+        throw new Exception(GenerateErrorMessageFromCalculation(printPaper));
+      }
     }
   }
 }

@@ -15,11 +15,36 @@ namespace PrintCost.DomainObjects
     public List<CopyPaper> CopyPapers { get; set; }
   }
 
-  public class CopyPaper
+  public interface IPrintPaper
+  {
+    public string GetInfo();
+    public decimal GetCostInCents();
+  }
+
+  public class CopyPaper : IPrintPaper
   {
     public string Size { get; set; }
     public bool IsColor { get; set; }
     public bool IsDoubleSided { get; set; }
     public decimal CostInCents { get; set; }
+
+    public string GetInfo()
+    {
+      string colourInfo =
+        IsColor ? "colour" : "black and white";
+      string doubleSidedInfo =
+        IsDoubleSided ? "double sided" : "single sided";
+      string costInCentsInfo = string.Empty;
+      if (CostInCents > 0)
+      {
+        costInCentsInfo = $" [{CostInCents} cent(s)]";
+      }
+      return $"{Size} copy paper {colourInfo} {doubleSidedInfo}{costInCentsInfo}.";
+    }
+
+    public decimal GetCostInCents()
+    {
+      return CostInCents;
+    }
   }
 }

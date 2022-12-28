@@ -70,11 +70,11 @@ namespace UnitTest.BusinessLogics
 
       string csvRowWithNoColourPage = "1, 0, false";
       output = testObject.ReadPrintJobDetailsCsvRow(csvRowWithNoColourPage);
-      Assert.Equal(1, output.NumberOfBlackAndWhitePages);
+      // No exception/error this far.
 
       string csvRowWithAllColourPages = "1, 1, false";
       output = testObject.ReadPrintJobDetailsCsvRow(csvRowWithAllColourPages);
-      Assert.Equal(0, output.NumberOfBlackAndWhitePages);
+      // No exception/error this far.
 
       try
       {
@@ -117,24 +117,30 @@ namespace UnitTest.BusinessLogics
       var testObject = new PrintJobDetailsReader();
 
       PrintJobDetails output;
-
-      string validCsvRow = "55,13,tRUe";
+      const string commaAndSpaceDelimiter = ", ";
+      const string commaOnlyDelimiter = ",";
+      string validCsvRow = $"55{commaAndSpaceDelimiter}13{commaOnlyDelimiter}tRUe";
       output = testObject.ReadPrintJobDetailsCsvRow(validCsvRow);
-      Assert.Equal(typeof(CopyPaper).Name, output.PaperType.Name);
-      Assert.Equal("A4", output.PaperSize);
-      Assert.Equal(55, output.TotalNumberOfPages);
-      Assert.Equal(55 - 13, output.NumberOfBlackAndWhitePages);
-      Assert.Equal(13, output.NumberOfColourPages);
-      Assert.True(output.IsDoubleSided);
 
-      validCsvRow = validCsvRow.Replace(",", ", ");
-      output = testObject.ReadPrintJobDetailsCsvRow(validCsvRow);
-      Assert.Equal(typeof(CopyPaper).Name, output.PaperType.Name);
-      Assert.Equal("A4", output.PaperSize);
-      Assert.Equal(55, output.TotalNumberOfPages);
-      Assert.Equal(55 - 13, output.NumberOfBlackAndWhitePages);
-      Assert.Equal(13, output.NumberOfColourPages);
-      Assert.True(output.IsDoubleSided);
+      Assert.Equal(2, output.PrintJobParts.Count);
+
+      var jobPart = output.PrintJobParts[0];
+      var numberOfPages = jobPart.NumberOfPages;
+      Assert.Equal(55 - 13, numberOfPages);
+      Assert.Equal(typeof(CopyPaper).Name, jobPart.PrintPaper.GetType().Name);
+      var copyPaper = (CopyPaper)jobPart.PrintPaper;
+      Assert.Equal("A4", copyPaper.Size);
+      Assert.False(copyPaper.IsColor);
+      Assert.True(copyPaper.IsDoubleSided);
+
+      jobPart = output.PrintJobParts[1];
+      numberOfPages = jobPart.NumberOfPages;
+      Assert.Equal(13, numberOfPages);
+      Assert.Equal(typeof(CopyPaper).Name, jobPart.PrintPaper.GetType().Name);
+      copyPaper = (CopyPaper)jobPart.PrintPaper;
+      Assert.Equal("A4", copyPaper.Size);
+      Assert.True(copyPaper.IsColor);
+      Assert.True(copyPaper.IsDoubleSided);
     }
   }
 }

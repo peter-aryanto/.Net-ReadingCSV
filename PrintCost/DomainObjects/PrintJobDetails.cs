@@ -18,23 +18,41 @@ namespace PrintCost.DomainObjects
       "Is Double Sided",
     };
 
-    public Type PaperType;
-    public string PaperSize { get; set; }
-    public int TotalNumberOfPages { get; set; }
-    public int NumberOfBlackAndWhitePages { get; set; }
-    public int NumberOfColourPages { get; set; }
-    public bool IsDoubleSided { get; set; }
+    public PrintJobDetails()
+    {
+      PrintJobParts = new List<PrintJobPart>();
+    }
+
+    public List<PrintJobPart> PrintJobParts { get; set; }
+    public decimal? CalculatedCostInCents { get; set; }
 
     public override string ToString()
     {
-      string doubleSidedInfo =
-        IsDoubleSided ? "double sided" : "single sided";
-      string blackAndWhitePagesInfo =
-        $"{NumberOfBlackAndWhitePages} black and white page(s)";
-      string colourPagesInfo =
-        $"{NumberOfColourPages} colour page(s)";
-      return $"Print job: {PaperSize} copy paper {doubleSidedInfo}; "
-        + $"{blackAndWhitePagesInfo}; {colourPagesInfo}.";
+      string output = string.Empty;
+      foreach (var part in PrintJobParts)
+      {
+        if (!string.IsNullOrEmpty(output))
+        {
+          output += Environment.NewLine;
+        }
+        output += part.ToString();
+      }
+      output += Environment.NewLine + $"Subtotal = {CalculatedCostInCents}.";
+      return output;
+    }
+  }
+
+  public class PrintJobPart
+  {
+    public int NumberOfPages { get; set; }
+    public IPrintPaper PrintPaper { get; set; }
+    public decimal? CalculatedCostInCents { get; set; }
+
+    //public decimal GetCostInCents()
+
+    public override string ToString()
+    {
+      return $"{NumberOfPages} x {PrintPaper.GetInfo()} -> Cost = {CalculatedCostInCents}.";
     }
   }
 }

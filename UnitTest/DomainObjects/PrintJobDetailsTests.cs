@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using Xunit;
+using Moq;
 using PrintCost.DomainObjects;
 
 namespace UnitTest.DomainObjects
@@ -6,25 +9,56 @@ namespace UnitTest.DomainObjects
   public class PrintJobDetailsTests
   {
     [Fact]
-    public void ToString_MustPresentCorrectDetails()
+    public void ToString_MustReturnCompleteDetails()
     {
+      var printPaper = new Mock<IPrintPaper>();
+      const string printPaperInfo = "Mock Paper.";
+      printPaper.Setup(x => x.GetInfo()).Returns(printPaperInfo);
       var testObject = new PrintJobDetails
       {
-        PaperType = typeof(CopyPaper),
-        PaperSize = "A4",
-        NumberOfBlackAndWhitePages = 1,
-        NumberOfColourPages = 2,
-        IsDoubleSided = true
+        PrintJobParts = new List<PrintJobPart>
+        {
+          new PrintJobPart
+          {
+            NumberOfPages = 2,
+            PrintPaper = printPaper.Object,
+            CalculatedCostInCents = 20,
+          },
+          new PrintJobPart
+          {
+            NumberOfPages = 3,
+            PrintPaper = printPaper.Object,
+            CalculatedCostInCents = 30,
+          },
+        },
+        CalculatedCostInCents = 50,
+      };
+
+      string completeDetails = $"2 x {printPaperInfo} -> Cost = 20."
+        + Environment.NewLine + $"3 x {printPaperInfo} -> Cost = 30."
+        + Environment.NewLine + "Subtotal = 50.";
+      Assert.Equal(completeDetails, testObject.ToString());
+    }
+  }
+
+  public class PrintJobPartTests
+  {
+    [Fact]
+    public void ToString_MustReturnCompleteDetails()
+    {
+      var printPaper = new Mock<IPrintPaper>();
+      const string printPaperInfo = "Print Paper.";
+      printPaper.Setup(x => x.GetInfo()).Returns(printPaperInfo);
+
+      var testObject = new PrintJobPart
+      {
+        NumberOfPages = 3,
+        PrintPaper = printPaper.Object,
+        CalculatedCostInCents = 30,
       };
 
       Assert.Equal(
-        "Print job: A4 copy paper double sided; 1 black and white page(s); 2 colour page(s).",
-        testObject.ToString()
-      );
-
-      testObject.IsDoubleSided = false;
-      Assert.Equal(
-        "Print job: A4 copy paper single sided; 1 black and white page(s); 2 colour page(s).",
+        $"3 x {printPaperInfo} -> Cost = 30.",
         testObject.ToString()
       );
     }

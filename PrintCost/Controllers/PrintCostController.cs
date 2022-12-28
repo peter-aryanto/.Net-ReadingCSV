@@ -21,6 +21,8 @@ namespace PrintCost.Controllers
     public static readonly string ErrorCannotReadPrintJobDetailsFile =
       "Cannot read print job details from the provided file. " + ErrorPrintJobDetailsFile;
 
+    public const string EndingLine = "=======================================";
+
     private readonly IPrintJobDetailsReader _printJobDetailsReader;
     private readonly IPrintCostCalculator _printCostCalculator;
     private readonly IOutputWriter _outputWriter;
@@ -74,10 +76,24 @@ namespace PrintCost.Controllers
           }
         }
 
+        decimal totalCostInCents = 0;
         foreach (var printJobDetails in printJobList)
         {
+          printJobDetails.CalculatedCostInCents = 0;
+          foreach (var part in printJobDetails.PrintJobParts)
+          {
+            part.CalculatedCostInCents = _printCostCalculator.CalculateCostInCents(
+              part.NumberOfPages,
+              part.PrintPaper
+            );
+            printJobDetails.CalculatedCostInCents += part.CalculatedCostInCents;
+          }
+
+          totalCostInCents += printJobDetails.CalculatedCostInCents ?? 0;
           _outputWriter.ConsoleWriteLine(printJobDetails.ToString());
         }
+        _outputWriter.ConsoleWriteLine($"Total Cost of All Jobs in Cents = {totalCostInCents}.");
+        _outputWriter.ConsoleWriteLine(EndingLine);
       }
       catch (Exception e)
       {
